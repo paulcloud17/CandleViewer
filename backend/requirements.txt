@@ -1,17 +1,7 @@
-# CandleViewer Backend - Python Dependencies
-
-# Flask Web Framework
 Flask==3.0.0
 flask-cors==4.0.0
-
-# Yahoo Finance API
-yfinance==0.2.33
-
-# Data Processing
-pandas==2.1.4
-numpy==1.26.2
-
-# Development
+yfinance>=0.2.40
+pandas>=2.2.3
+numpy>=1.26.4
 python-dotenv==1.0.0
-
-gunicorn==20.1.0
+gunicorn
