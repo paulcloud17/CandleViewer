@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CandleViewer - Backtest Analyzer</title>
+    
+    <!-- Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/static/images/candleviewer_logo2.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/static/images/candleviewer_logo2.ico" type="image/x-icon">
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- Toast Container for elegant notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>
+                        <img src="/static/images/candleviewer_logo_for_light.png" alt="CandleViewer Logo" class="logo-light" height="64">
+                        <img src="/static/images/candleviewer_logo_for_dark.png" alt="CandleViewer Logo" class="logo-dark" height="64">
+                        CandleViewer
+                    </h1>
+                    <p class="subtitle">Vizualizace výsledků algoritmického obchodování</p>
+                </div>
+                <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Přepnout Dark Mode">
+                    <span class="toggle-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Input Section -->
+        <section class="input-section">
+            <div class="card">
+                <h2>🎯 Parametry Analýzy</h2>
+                
+                <form id="analysisForm">
+                    <!-- Symbol & Dates -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="symbolInput">
+                                <span class="label-text">Symbol (Ticker)</span>
+                                <span class="label-hint">např. AAPL, TSLA, BTC-USD</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="symbolInput" 
+                                name="symbol" 
+                                placeholder="AAPL"
+                                required
+                                class="input-field"
+                            >
+                            <div class="validation-message" id="symbolValidation"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="startDateInput">
+                                <span class="label-text">Datum začátku</span>
+                                <span class="label-hint">časový interval menší než denní je dostupný max 60 dní zpět</span>
+                            </label>
+                            <input 
+                                type="date" 
+                                id="startDateInput" 
+                                name="startDate" 
+                                required
+                                class="input-field"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endDateInput">
+                                <span class="label-text">Datum konce</span>
+                                <span class="label-hint">datum musí být starší než dnešní</span>
+                            </label>
+                            <input 
+                                type="date" 
+                                id="endDateInput" 
+                                name="endDate" 
+                                required
+                                class="input-field"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Initial Capital & Interval -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="capitalInput">
+                                <span class="label-text">Počáteční kapitál ($)</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                id="capitalInput" 
+                                name="initialCapital" 
+                                placeholder="10000"
+                                min="1"
+                                step="1"
+                                required
+                                class="input-field"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="intervalInput">
+                                <span class="label-text">Časový interval (timeframe)</span>
+                            </label>
+                            <select id="intervalInput" name="interval" class="input-field">
+                                <option value="1d" selected>1 den</option>
+                                <option value="1h">1 hodina</option>
+                                <option value="30m">30 minut</option>
+                                <option value="15m">15 minut</option>
+                                <option value="5m">5 minut</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label for="tradesFileInput">
+                            <span class="label-text">📁 Backtest Log (trades)</span>
+                            <span class="label-hint">CSV nebo JSON soubor s obchody</span>
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input 
+                                type="file" 
+                                id="tradesFileInput" 
+                                name="tradesFile" 
+                                accept=".csv,.json"
+                                class="file-input"
+                            >
+                            <label for="tradesFileInput" class="file-upload-label">
+                                <span class="upload-icon">📎</span>
+                                <span id="fileNameDisplay">Vyberte soubor...</span>
+                            </label>
+                        </div>
+                        <div class="file-info">
+                            <details>
+                                <summary>Formát souboru</summary>
+                                <div class="format-info">
+                                    <p><strong>Povinné sloupce:</strong> entryTime, entryPrice, exitTime, exitPrice</p>
+                                    <p><strong>Volitelné:</strong> shares (výchozí 1), type (výchozí "long"), pnl (automatický výpočet)</p>
+                                    
+                                    <h4>CSV formát:</h4>
+                                    <pre>entryTime,entryPrice,exitTime,exitPrice,shares,type
+2023-01-05,150.50,2023-01-10,155.20,100,long
+2023-02-01,148.00,2023-02-05,146.50,50,short</pre>
+                                    
+                                    <h4>JSON formát:</h4>
+                                    <pre>{
+  "trades": [
+    {
+      "entryTime": "2023-01-05",
+      "entryPrice": 150.5,
+      "exitTime": "2023-01-10",
+      "exitPrice": 155.2,
+      "shares": 100,
+      "type": "long"
+    },
+    {
+      "entryTime": "2023-02-01",
+      "entryPrice": 148.0,
+      "exitTime": "2023-02-05",
+      "exitPrice": 146.5,
+      "shares": 50,
+      "type": "short"
+    }
+  ]
+}</pre>
+                                    <p><em>Tip: Formát data YYYY-MM-DD nebo YYYY-MM-DD HH:MM pro intraday.</em></p>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" id="analyzeBtn" class="btn btn-primary">
+                            <span class="btn-icon">🚀</span>
+                            <span>Analyzovat</span>
+                        </button>
+                        <button type="button" id="resetBtn" class="btn btn-secondary">
+                            <span>Resetovat</span>
+                        </button>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <p id="loadingText">Stahuji data z yfinance...</p>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section" id="chartsSection" style="display: none;">
+            <div class="card">
+                <div class="chart-header">
+                    <h2 id="mainChartTitle">📈 Main Chart</h2>
+                    <div class="chart-header-actions">
+                        <div id="mainChartLegend" class="chart-legend"></div>
+                        <button id="openDetachedBtn" class="btn-detached" title="Otevřít v novém okně">
+                            🪟 Nové okno
+                        </button>
+                    </div>
+                </div>
+                <div id="mainChart" class="chart-container"></div>
+            </div>
+
+            <div class="card">
+                <div class="chart-header">
+                    <h2>💰 Performance Chart</h2>
+                    <div id="performanceChartLegend" class="chart-legend"></div>
+                </div>
+                <div id="performanceChart" class="chart-container"></div>
+            </div>
+        </section>
+
+        <!-- Statistics Dashboard -->
+        <section class="stats-section" id="statsSection" style="display: none;">
+            <div class="card">
+                <h2>📊 Statistiky Strategie</h2>
+                
+                <div class="stats-grid">
+                    <!-- Returns - KEY METRICS (prominent) -->
+                    <div class="stat-card stat-card-primary" data-tooltip="Celková návratnost strategie za zvolené období." tabindex="0">
+                        <div class="stat-badge">KEY</div>
+                        <div class="stat-label">Total Return</div>
+                        <div class="stat-value stat-value-large" id="statTotalReturn">-</div>
+                        <div class="stat-unit">%</div>
+                    </div>
+
+                    <div class="stat-card" data-tooltip="Buy & Hold (koupit na začátku a držet do konce zvoleného období)." tabindex="0">
+                        <div class="stat-label">Benchmark (B&H)</div>
+                        <div class="stat-value" id="statBenchmark">-</div>
+                        <div class="stat-unit">%</div>
+                    </div>
+
+                    <!-- Risk Metrics -->
+                    <div class="stat-card" data-tooltip="Výnos upravený o riziko." tabindex="0">
+                        <div class="stat-label">Sharpe Ratio</div>
+                        <div class="stat-value" id="statSharpe">-</div>
+                    </div>
+
+                    <div class="stat-card" data-tooltip="Výnos upravený o špatné riziko." tabindex="0">
+                        <div class="stat-label">Sortino Ratio</div>
+                        <div class="stat-value" id="statSortino">-</div>
+                    </div>
+
+                    <div class="stat-card stat-card-primary" data-tooltip="Největší propad kapitálu od lokálního maxima k následujícímu minimu." tabindex="0">
+                        <div class="stat-badge">RISK</div>
+                        <div class="stat-label">Max Drawdown</div>
+                        <div class="stat-value stat-value-large" id="statMDD">-</div>
+                        <div class="stat-unit">%</div>
+                    </div>
+
+                    <!-- Trade Stats -->
+                    <div class="stat-card" data-tooltip="Podíl úspěšných obchodů na celkovém počtu obchodů." tabindex="0">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value" id="statWinRate">-</div>
+                        <div class="stat-unit">%</div>
+                    </div>
+
+                    <div class="stat-card" data-tooltip="Součet zisků / součet ztrát (absolutně). Hodnota > 1 znamená ziskovost." tabindex="0">
+                        <div class="stat-label">Profit Factor</div>
+                        <div class="stat-value" id="statProfitFactor">-</div>
+                    </div>
+
+                    <div class="stat-card" data-tooltip="Průměrný zisk/ztráta na jeden obchod." tabindex="0">
+                        <div class="stat-label">Avg Profit/Trade</div>
+                        <div class="stat-value" id="statAvgProfit">-</div>
+                        <div class="stat-unit">$</div>
+                    </div>
+
+                    <div class="stat-card" data-tooltip="Celkový počet obchodů v nahraném backtest logu." tabindex="0">
+                        <div class="stat-label">Total Trades</div>
+                        <div class="stat-value" id="statTotalTrades">-</div>
+                    </div>
+
+                    <div class="stat-card" data-tooltip="Poměr celkového zisku k maximálnímu drawdownu." tabindex="0">
+                        <div class="stat-label">Recovery Factor</div>
+                        <div class="stat-value" id="statRecovery">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section class="history-section">
+            <div class="card">
+                <div class="history-header">
+                    <h2>🕒 Historie Analýz</h2>
+                    <button type="button" id="clearHistoryBtn" class="clear-history-btn" aria-label="Vymazat historii">
+                        🗑️
+                    </button>
+                </div>
+                <div id="historyList" class="history-list">
+                    <p class="empty-state">Zatím žádné analýzy</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2026 CandleViewer | Pomocník pro algoritmické obchodování</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Modules (type="module" pro ES6 import/export) -->
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
