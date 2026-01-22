@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CandleViewer</title>
+    <link rel="icon" type="image/x-icon" href="images/candleviewer_logo2.ico">
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>CandleViewer <img class="logo" src="images/candleviewer.png" alt="CandleViewer Logo"></h1>
+
+    <div class="grid-container">
+        
+        <section class="section">
+            <h3>Nastavení backtestu</h3>
+            <form id="analysisForm">
+                <div class="input-group">
+                    <div>
+                        <label>Symbol (Ticker)</label>
+                        <input type="text" id="symbol" placeholder="AAPL" required value="AAPL">
+                    </div>
+                    <div>
+                        <label>Od</label>
+                        <input type="date" id="startDate" required value="2023-01-01">
+                    </div>
+                    <div>
+                        <label>Do</label>
+                        <input type="date" id="endDate" required value="2025-12-31">
+                    </div>
+                    <div>
+                        <label>Počáteční kapitál ($)</label>
+                        <input type="number" id="capital" value="10000" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div>
+                        <label>Soubor s obchody (JSON/CSV)</label>
+                        <input type="file" id="tradesFile" accept=".json,.csv" required>
+                    </div>
+                    <button type="submit">Analyzovat</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="section">
+            <h3>Výsledky strategie</h3>
+            <div class="stats-grid">
+                <div class="stat-box"><span id="statTotalReturn" class="stat-val">-</span>Total Return %</div>
+                <div class="stat-box"><span id="statBenchmark" class="stat-val">-</span>Benchmark (B&H)</div>
+                <div class="stat-box"><span id="statSharpe" class="stat-val">-</span>Sharpe Ratio</div>
+                <div class="stat-box"><span id="statSortino" class="stat-val">-</span>Sortino Ratio</div>
+                <div class="stat-box"><span id="statProfitFactor" class="stat-val">-</span>Profit Factor</div>
+                <div class="stat-box"><span id="statMdd" class="stat-val">-</span>Max Drawdown</div>
+                <div class="stat-box"><span id="statWinRate" class="stat-val">-</span>Win Rate</div>
+                <div class="stat-box"><span id="statRecovery" class="stat-val">-</span>Recovery Factor</div>
+                <div class="stat-box"><span id="statNumberOfTrades" class="stat-val">-</span>Number of Trades</div>
+                <div class="stat-box"><span id="statFinalCapital" class="stat-val">-</span>Final Capital</div>
+                <div class="stat-box"><span id="statAvgProfitPerTrade" class="stat-val">-</span>Avg. Profit per Trade</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h3>Vizualizace</h3>
+            <h4>Cenový graf (Main Chart)</h4>
+            <div id="mainChart" class="chart-box"></div>
+            
+            <h4>Vývoj kapitálu (Performance Chart)</h4>
+            <div id="perfChart" class="chart-box"></div>
+        </section>
+
+        <section class="section">
+            <h3>Historie analýz</h3>
+            <ul id="historyList">
+                <li>(Zatím prázdné)</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <script type="module" src="app.js"></script>
+
+</body>
+</html>
